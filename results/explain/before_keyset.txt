@@ -1,0 +1,26 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, title, content, created_at, updated_at FROM notes WHERE (created_at, id) < ('2025-11-23 17:46:43.602009+03', 500001) ORDER BY created_at DESC, id DESC LIMIT 20;
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=38173.14..38175.48 rows=20 width=180) (actual time=97.833..99.214 rows=20 loops=1)
+   Buffers: shared hit=25366
+   ->  Gather Merge  (cost=38173.14..87168.63 rows=419932 width=180) (actual time=97.831..99.210 rows=20 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=25366
+         ->  Sort  (cost=37173.12..37698.03 rows=209966 width=180) (actual time=92.146..92.149 rows=14 loops=3)
+               Sort Key: created_at DESC, id DESC
+               Sort Method: top-N heapsort  Memory: 35kB
+               Buffers: shared hit=25366
+               Worker 0:  Sort Method: top-N heapsort  Memory: 36kB
+               Worker 1:  Sort Method: top-N heapsort  Memory: 36kB
+               ->  Parallel Seq Scan on notes  (cost=0.00..31586.00 rows=209966 width=180) (actual time=0.012..58.447 rows=166667 loops=3)
+                     Filter: (ROW(created_at, id) < ROW('2025-11-23 17:46:43.602009+03'::timestamp with time zone, 500001))
+                     Rows Removed by Filter: 166667
+                     Buffers: shared hit=25336
+ Planning:
+   Buffers: shared hit=84
+ Planning Time: 0.322 ms
+ Execution Time: 99.268 ms
+(20 rows)
+

@@ -1,0 +1,13 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, title FROM notes WHERE id = 424242;
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Index Scan using notes_pkey on notes  (cost=0.42..8.44 rows=1 width=27) (actual time=0.048..0.049 rows=1 loops=1)
+   Index Cond: (id = 424242)
+   Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=64
+ Planning Time: 0.277 ms
+ Execution Time: 0.086 ms
+(7 rows)
+

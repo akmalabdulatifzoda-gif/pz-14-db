@@ -1,0 +1,28 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, title, content, created_at, updated_at FROM notes ORDER BY created_at DESC, id DESC OFFSET 500000 LIMIT 20;
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=201792.91..201795.24 rows=20 width=180) (actual time=379.610..396.011 rows=20 loops=1)
+   Buffers: shared hit=25424, temp read=34773 written=45958
+   ->  Gather Merge  (cost=143455.50..240684.59 rows=833334 width=180) (actual time=236.084..377.307 rows=500020 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=25424, temp read=34773 written=45958
+         ->  Sort  (cost=142455.48..143497.15 rows=416667 width=180) (actual time=197.155..222.126 rows=166862 loops=3)
+               Sort Key: created_at DESC, id DESC
+               Sort Method: external merge  Disk: 47536kB
+               Buffers: shared hit=25424, temp read=34773 written=45958
+               Worker 0:  Sort Method: external merge  Disk: 55192kB
+               Worker 1:  Sort Method: external merge  Disk: 80856kB
+               ->  Parallel Seq Scan on notes  (cost=0.00..29502.67 rows=416667 width=180) (actual time=0.009..33.185 rows=333333 loops=3)
+                     Buffers: shared hit=25336
+ Planning:
+   Buffers: shared hit=89
+ Planning Time: 0.313 ms
+ JIT:
+   Functions: 2
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 0.061 ms, Inlining 0.000 ms, Optimization 0.159 ms, Emission 1.719 ms, Total 1.939 ms
+ Execution Time: 414.269 ms
+(22 rows)
+

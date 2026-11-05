@@ -1,0 +1,16 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, title FROM notes WHERE to_tsvector('simple', title) @@ plainto_tsquery('simple', 'redis') ORDER BY id DESC LIMIT 20;
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.42..1215.72 rows=20 width=27) (actual time=0.029..0.398 rows=20 loops=1)
+   Buffers: shared hit=14
+   ->  Index Scan Backward using notes_pkey on notes  (cost=0.42..303823.96 rows=5000 width=27) (actual time=0.029..0.395 rows=20 loops=1)
+         Filter: (to_tsvector('simple'::regconfig, title) @@ '''redis'''::tsquery)
+         Rows Removed by Filter: 208
+         Buffers: shared hit=14
+ Planning:
+   Buffers: shared hit=81
+ Planning Time: 0.497 ms
+ Execution Time: 0.422 ms
+(10 rows)
+

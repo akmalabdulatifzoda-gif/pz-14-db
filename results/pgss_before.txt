@@ -1,0 +1,8 @@
+                                              query                                              | calls  | total_ms | mean_ms | max_ms 
+-------------------------------------------------------------------------------------------------+--------+----------+---------+--------
+ SELECT id, title FROM notes WHERE to_tsvector($3, title) @@ plainto_tsquery($4, $1) ORDER BY id |     11 |    15310 | 1391.85 | 1629.6
+ SELECT id, title, content, created_at, updated_at FROM notes ORDER BY created_at DESC, id DESC  |     41 |    14672 |  357.84 |  886.1
+ SELECT id, title FROM notes WHERE id = $1                                                       | 641460 |     2835 |    0.00 |    5.2
+ SELECT id, title, content, created_at, updated_at FROM notes WHERE id = $1                      | 186265 |     1401 |    0.01 |   13.8
+(4 rows)
+

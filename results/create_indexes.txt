@@ -1,0 +1,14 @@
+notes=> \i migrations/002_indexes.sql
+Timing is on.
+CREATE INDEX
+Time: 3879.345 ms (00:03.879)
+CREATE INDEX
+Time: 370.525 ms
+ANALYZE
+Time: 196.972 ms
+                                        List of relations
+ Schema |    Name    | Type  | Owner | Table | Persistence | Access method | Size  | Description 
+--------+------------+-------+-------+-------+-------------+---------------+-------+-------------
+ public | notes_pkey | index | notes | notes | permanent   | btree         | 21 MB | 
+(1 row)
+

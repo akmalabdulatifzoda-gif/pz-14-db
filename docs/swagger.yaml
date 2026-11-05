@@ -1,0 +1,347 @@
+basePath: /api/v1
+definitions:
+  core.ErrorResponse:
+    properties:
+      error:
+        example: описание ошибки
+        type: string
+    type: object
+  core.Note:
+    properties:
+      content:
+        example: Добавить пример структуры API
+        type: string
+      createdAt:
+        example: "2026-11-05T12:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      title:
+        example: Идея для лекции
+        type: string
+      updatedAt:
+        example: "2026-11-05T12:30:00Z"
+        type: string
+    type: object
+  core.NoteCreate:
+    properties:
+      content:
+        example: Текст заметки
+        type: string
+      title:
+        example: Новая заметка
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  core.NoteShort:
+    properties:
+      id:
+        example: 1
+        type: integer
+      title:
+        example: 'Redis cache #42'
+        type: string
+    type: object
+  core.NoteUpdate:
+    properties:
+      content:
+        example: Новый текст
+        type: string
+      title:
+        example: Обновлено
+        maxLength: 200
+        type: string
+    type: object
+info:
+  contact:
+    name: Абдулатифзода Акмал, ЭФМО-0126
+    url: https://github.com/akmalabdulatifzoda-gif/pz-14-db
+  description: |-
+    Учебный REST API для заметок. ПЗ №14 — PostgreSQL, connection pool, оптимизация запросов.
+    Методы POST, PATCH и DELETE требуют Bearer-токен, если сервер запущен с API_TOKEN.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Notes API
+  version: "1.2"
+paths:
+  /notes:
+    get:
+      description: |-
+        По умолчанию — keyset-пагинация: курсор следующей страницы приходит в заголовке X-Next-Cursor.
+        Параметр offset включает старую OFFSET-пагинацию (оставлена для сравнения, медленная на больших смещениях).
+      operationId: listNotes
+      parameters:
+      - default: 20
+        description: Размер страницы (1–100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Курсор из X-Next-Cursor предыдущей страницы
+        in: query
+        name: cursor
+        type: string
+      - description: Смещение (устаревший режим)
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Next-Cursor:
+              description: Курсор следующей страницы (нет — страница последняя)
+              type: string
+          schema:
+            items:
+              $ref: '#/definitions/core.Note'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: Список заметок (keyset или offset)
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      operationId: createNote
+      parameters:
+      - description: Данные новой заметки
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/core.NoteCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              description: URL созданной заметки
+              type: string
+          schema:
+            $ref: '#/definitions/core.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать заметку
+      tags:
+      - notes
+  /notes/{id}:
+    delete:
+      description: Кэш заметки инвалидируется
+      operationId: deleteNote
+      parameters:
+      - description: ID заметки
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить заметку
+      tags:
+      - notes
+    get:
+      description: Чтение через кэш Redis (cache-aside, TTL 60 с), если сервер запущен
+        с REDIS_ADDR
+      operationId: getNote
+      parameters:
+      - description: ID заметки
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: Получить заметку
+      tags:
+      - notes
+    patch:
+      consumes:
+      - application/json
+      description: 'Транзакция READ COMMITTED: SELECT ... FOR UPDATE + UPDATE; кэш
+        заметки инвалидируется'
+      operationId: patchNote
+      parameters:
+      - description: ID заметки
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Поля для обновления
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/core.NoteUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Note'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить заметку (частично)
+      tags:
+      - notes
+  /notes/batch:
+    get:
+      description: Один запрос WHERE id = ANY($1). mode=n1 — старый вариант с отдельным
+        запросом на каждый id (для сравнения).
+      operationId: batchNotes
+      parameters:
+      - description: Список id через запятую (до 100)
+        example: 1,2,3
+        in: query
+        name: ids
+        required: true
+        type: string
+      - description: batch (по умолчанию) или n1
+        enum:
+        - batch
+        - n1
+        in: query
+        name: mode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.NoteShort'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: Получить несколько заметок по id
+      tags:
+      - notes
+  /notes/search:
+    get:
+      description: 'to_tsvector(''simple'', title) @@ plainto_tsquery(''simple'',
+        q) через GIN-индекс idx_notes_title_gin (CTE MATERIALIZED: сначала поиск по
+        индексу, потом сортировка)'
+      operationId: searchNotes
+      parameters:
+      - description: Слова для поиска
+        example: redis
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 20
+        description: Сколько результатов (1–100)
+        in: query
+        name: limit
+        type: integer
+      - description: optimized (по умолчанию) или naive — исходный запрос для сравнения
+        enum:
+        - optimized
+        - naive
+        in: query
+        name: mode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.NoteShort'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/core.ErrorResponse'
+      summary: Полнотекстовый поиск по заголовку
+      tags:
+      - notes
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите токен в формате: Bearer ВАШ_ТОКЕН (для демо: Bearer secret)'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

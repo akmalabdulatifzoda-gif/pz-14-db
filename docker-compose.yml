@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: notes
+    command: >
+      postgres -c shared_preload_libraries=pg_stat_statements
+               -c pg_stat_statements.track=all
+               -c max_connections=200
+    ports: ["5432:5432"]
+    volumes:
+      - ./migrations/000_extensions.sql:/docker-entrypoint-initdb.d/000_extensions.sql:ro
+      - ./migrations/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]

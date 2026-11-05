@@ -1,0 +1,5 @@
+SELECT id, title, content, created_at, updated_at FROM notes ORDER BY created_at DESC, id DESC OFFSET $1 LIMIT $2|888|287594.34224899986|323.8675025326577
+SELECT id, title FROM notes WHERE id = ANY($1) ORDER BY id|138708|5083.31980299999|0.03664763245811301
+SELECT id, title, content, created_at, updated_at FROM notes WHERE (created_at, id) < ($1, $2) ORDER BY created_at DESC, id DESC LIMIT $3|91093|1920.657473000018|0.02108457810150065
+WITH m AS MATERIALIZED ( SELECT id, title FROM notes WHERE to_tsvector($3, title) @@ plainto_tsquery($4, $1) ) SELECT id, title FROM m ORDER BY id DESC LIMIT $2|115658|1449.812876000004|0.012535344515727466
+SELECT id, title, content, created_at, updated_at FROM notes WHERE id = $1|1|0.021251|0.021251

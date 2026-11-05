@@ -1,0 +1,14 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, title, content, created_at, updated_at FROM notes ORDER BY created_at DESC, id DESC OFFSET 500000 LIMIT 20;
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=44493.21..44494.99 rows=20 width=180) (actual time=91.046..91.051 rows=20 loops=1)
+   Buffers: shared hit=19477 read=1918
+   ->  Index Scan Backward using idx_notes_created_id on notes  (cost=0.42..88985.99 rows=1000000 width=180) (actual time=0.031..72.404 rows=500020 loops=1)
+         Buffers: shared hit=19477 read=1918
+ Planning:
+   Buffers: shared hit=126
+ Planning Time: 0.330 ms
+ Execution Time: 91.077 ms
+(8 rows)
+

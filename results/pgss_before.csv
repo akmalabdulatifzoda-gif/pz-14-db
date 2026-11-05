@@ -1,0 +1,4 @@
+SELECT id, title FROM notes WHERE to_tsvector($3, title) @@ plainto_tsquery($4, $1) ORDER BY id DESC LIMIT $2|11|15310.385502999998|1391.8532275454545
+SELECT id, title, content, created_at, updated_at FROM notes ORDER BY created_at DESC, id DESC OFFSET $1 LIMIT $2|41|14671.556062999998|357.84283080487796
+SELECT id, title FROM notes WHERE id = $1|641460|2835.4905729999537|0.004420370051133297
+SELECT id, title, content, created_at, updated_at FROM notes WHERE id = $1|186265|1401.2198249999794|0.007522722062652746

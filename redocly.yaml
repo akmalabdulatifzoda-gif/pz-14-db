@@ -1,0 +1,15 @@
+extends:
+  - recommended
+rules:
+  # Чтение (GET) намеренно публичное, авторизация нужна только для изменения данных.
+  security-defined:
+    severity: error
+    exceptions:
+      - path: /notes
+        methods: [get]
+      - path: /notes/{id}
+        methods: [get]
+      - path: /notes/batch
+        methods: [get]
+      - path: /notes/search
+        methods: [get]

@@ -1,0 +1,30 @@
+notes=> EXPLAIN (ANALYZE, BUFFERS)
+WITH m AS MATERIALIZED (SELECT id, title FROM notes WHERE to_tsvector('simple', title) @@ plainto_tsquery('simple', 'redis')) SELECT id, title FROM m ORDER BY id DESC LIMIT 20;
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=48742.42..48742.47 rows=20 width=40) (actual time=85.187..85.615 rows=20 loops=1)
+   Buffers: shared hit=25359, temp written=384
+   CTE m
+     ->  Gather  (cost=1596.53..44771.28 rows=85200 width=27) (actual time=14.180..58.304 rows=83334 loops=1)
+           Workers Planned: 2
+           Workers Launched: 2
+           Buffers: shared hit=25356
+           ->  Parallel Bitmap Heap Scan on notes  (cost=596.53..35251.28 rows=35500 width=27) (actual time=10.578..50.711 rows=27778 loops=3)
+                 Recheck Cond: (to_tsvector('simple'::regconfig, title) @@ '''redis'''::tsquery)
+                 Heap Blocks: exact=8233
+                 Buffers: shared hit=25356
+                 ->  Bitmap Index Scan on idx_notes_title_gin  (cost=0.00..575.23 rows=85200 width=0) (actual time=10.345..10.346 rows=83334 loops=1)
+                       Index Cond: (to_tsvector('simple'::regconfig, title) @@ '''redis'''::tsquery)
+                       Buffers: shared hit=20
+   ->  Sort  (cost=3971.14..4184.14 rows=85200 width=40) (actual time=85.185..85.188 rows=20 loops=1)
+         Sort Key: m.id DESC
+         Sort Method: top-N heapsort  Memory: 27kB
+         Buffers: shared hit=25359, temp written=384
+         ->  CTE Scan on m  (cost=0.00..1704.00 rows=85200 width=40) (actual time=14.184..78.349 rows=83334 loops=1)
+               Buffers: shared hit=25356, temp written=384
+ Planning:
+   Buffers: shared hit=129
+ Planning Time: 0.518 ms
+ Execution Time: 85.915 ms
+(24 rows)
+
